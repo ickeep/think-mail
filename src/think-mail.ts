@@ -28,7 +28,7 @@ export default class extends think.Service {
       logDb: 'log',
       logTable: 'mail',
     }
-    const dfConf = think.config('sendCloud')
+    const dfConf = think.config('mail')
     this.conf = Object.assign(dfOpts, dfConf, conf)
   }
 
