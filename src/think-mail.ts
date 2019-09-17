@@ -35,16 +35,8 @@ export default class extends think.Service {
   async send(sendOpts: any, apiUrl = 'http://api.sendcloud.net/apiv2/mail/send') {
     const opts = Object.assign(this.conf, sendOpts)
     const postConf: any = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    postConf.transformRequest = [(data: object) => {
-      let str = ''
-      Object.keys(data).forEach((key) => {
-        str += `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}&`
-      })
-      return str
-    }]
     const sendData = await think.httpPost(apiUrl, opts, postConf)
     const { code, msg, status, data } = sendData
-
     if (code === 0 && data.statusCode !== 200) {
       sendData.code = data.statusCode // http 请求成功  sendCloud 返回错误
       sendData.msg = data.message
