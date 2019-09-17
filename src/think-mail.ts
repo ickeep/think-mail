@@ -42,11 +42,11 @@ export default class extends think.Service {
       sendData.msg = data.message
       think.logger.error(sendData.msg)
     }
-    const { logTable, logDb, to, xsmtpapi } = opts
+    const { logTable, logDb, to, xsmtpapi, apiKey, ...args } = opts
     if (logTable && logDb) {
       think.model(logTable, logDb).add({
         mail: to || xsmtpapi,
-        opt: JSON.stringify(opts),
+        opt: JSON.stringify(args),
         result: JSON.stringify({ code, msg, status, data }),
         time: Math.floor(new Date().getTime() / 1000)
       })
