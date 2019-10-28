@@ -1,5 +1,5 @@
 // @ts-ignore
-import { think } from 'thinkjs'
+import { think, Context } from 'thinkjs'
 
 export interface IConf {
   apiUser: string,
@@ -32,10 +32,11 @@ export default class extends think.Service {
     this.conf = Object.assign(dfOpts, dfConf, conf)
   }
 
-  async send(sendOpts: any, apiUrl = 'http://api.sendcloud.net/apiv2/mail/send') {
+  async send(sendOpts: any, apiUrl: string, ctx: Context) {
+    const url = apiUrl || 'http://api.sendcloud.net/apiv2/mail/send'
     const opts = Object.assign(this.conf, sendOpts)
     const postConf: any = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    const sendData = await think.httpPost(apiUrl, opts, postConf)
+    const sendData = await think.httpPost(url, opts, postConf)
     const { code, msg, status, data } = sendData
     if (code === 0 && data.statusCode !== 200) {
       sendData.code = data.statusCode // http 请求成功  sendCloud 返回错误
@@ -48,27 +49,28 @@ export default class extends think.Service {
         mail: to || xsmtpapi,
         opt: JSON.stringify(args),
         result: JSON.stringify({ code, msg, status, data }),
-        time: Math.floor(new Date().getTime() / 1000)
+        time: Math.floor(new Date().getTime() / 1000),
+        ip: ctx.ip
       })
     }
     return sendData
   }
 
-  sendTemplate(name: string, sendOpt: ISendTemplateOpt) {
+  sendTemplate(name: string, sendOpt: ISendTemplateOpt, ctx: Context) {
     const opts = Object.assign(this.conf, {
       templateInvokeName: name,
       xsmtpapi: JSON.stringify(sendOpt)
     })
-    return this.send(opts, 'http://api.sendcloud.net/apiv2/mail/sendtemplate')
+    return this.send(opts, 'http://api.sendcloud.net/apiv2/mail/sendtemplate', ctx)
   }
 
-  sendCaptcha(mail: string, action: string, code: string | number, minute: any) {
+  sendCaptcha(mail: string, action: string, code: string | number, minute: any, ctx: Context) {
     const actionNameMap = { login: '登录', join: '注册', bind: '绑定', reset: '重置' }
     const actionName = actionNameMap[action] || ''
     const sendOpt = {
       to: [mail],
       sub: { '%action%': [actionName], '%code%': [code], '%minute%': [minute] }
     }
-    return this.sendTemplate(this.conf.captchaTemplate, sendOpt)
+    return this.sendTemplate(this.conf.captchaTemplate, sendOpt, ctx)
   }
 }
